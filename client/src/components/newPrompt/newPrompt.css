@@ -1,0 +1,66 @@
+.endChat{
+  padding-bottom: 100px;
+}
+  .newForm{
+    width: 50%;
+    position: absolute;
+    bottom: 0;
+    background-color: #2c2937;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0px 20px;
+    margin-bottom: 60px;
+    margin-bottom: 0; 
+    
+
+
+    input{
+      flex:1;
+      padding:20px;
+      border: none;
+      outline: none;
+      background-color: transparent;
+      color: #ececec;
+    }
+
+    button,label{
+      border-radius: 50%;
+      background-color: #605e68;
+      border: none;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      img{
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+/* Hide the horizontal scrollbar */
+body {
+  overflow-x: hidden;
+}
+
+/* Style vertical scrollbar */
+::-webkit-scrollbar {
+  width: 15px; /* Width of the scrollbar */
+  height: 0; /* Hide the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #a8a5b4; /* Background of the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333; /* Color of the scroll thumb */
+  border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444; /* Color of the thumb on hover */
+}
