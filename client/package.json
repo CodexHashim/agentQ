@@ -19,7 +19,7 @@
     "@tanstack/react-query": "^5.51.9",
     "bootstrap": "^5.3.3",
     "imagekitio-react": "^4.1.0",
-    "react": "^19.0.0-rc-8b08e99e-20240713",
+    "react": "^18.3.1",
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
