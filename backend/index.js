@@ -14,7 +14,6 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Allowed origins for CORS
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5137',
@@ -22,7 +21,6 @@ const allowedOrigins = [
   'https://rh-agent-q-git-main-codexhashims-projects.vercel.app',
   'https://rh-agent-lc8fr314t-codexhashims-projects.vercel.app',
 ];
-
 
 app.use(
   cors({
@@ -36,6 +34,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 app.use(express.json());
 
