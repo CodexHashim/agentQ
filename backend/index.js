@@ -22,20 +22,30 @@ const allowedOrigins = [
   'https://rh-agent-lc8fr314t-codexhashims-projects.vercel.app',
 ];
 
+// CORS setup
 app.use(
   cors({
     origin: function (origin, callback) {
-      console.log('Origin:', origin); // Add this line
+      console.log('Origin:', origin);
       if (allowedOrigins.includes(origin) || !origin) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
     },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   })
 );
 
+// Preflight handling
+app.options('*', cors());
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 app.use(express.json());
 
@@ -64,32 +74,21 @@ app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
   const { text } = req.body;
 
   try {
-    // CREATE A NEW CHAT
     const newChat = new Chat({
       userId: userId,
       history: [{ role: "user", parts: [{ text }] }],
     });
 
     const savedChat = await newChat.save();
-
-    // CHECK IF THE USERCHATS EXISTS
     const userChats = await UserChats.find({ userId: userId });
 
-    // IF DOESN'T EXIST CREATE A NEW ONE AND ADD THE CHAT IN THE CHATS ARRAY
     if (!userChats.length) {
       const newUserChats = new UserChats({
         userId: userId,
-        chats: [
-          {
-            _id: savedChat._id,
-            title: text.substring(0, 40),
-          },
-        ],
+        chats: [{ _id: savedChat._id, title: text.substring(0, 40) }],
       });
-
       await newUserChats.save();
     } else {
-      // IF EXISTS, PUSH THE CHAT TO THE EXISTING ARRAY
       await UserChats.updateOne(
         { userId: userId },
         {
@@ -101,9 +100,8 @@ app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
           },
         }
       );
-
-      res.status(201).send(newChat._id);
     }
+    res.status(201).send(newChat._id);
   } catch (err) {
     console.log(err);
     res.status(500).send("Error creating chat!");
@@ -115,7 +113,6 @@ app.get("/api/userchats", ClerkExpressRequireAuth(), async (req, res) => {
 
   try {
     const userChats = await UserChats.find({ userId });
-
     res.status(200).send(userChats[0].chats);
   } catch (err) {
     console.log(err);
@@ -128,7 +125,6 @@ app.get("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
 
   try {
     const chat = await Chat.findOne({ _id: req.params.id, userId });
-
     res.status(200).send(chat);
   } catch (err) {
     console.log(err);
@@ -138,13 +134,10 @@ app.get("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
 
 app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
   const userId = req.auth.userId;
-
   const { question, answer, img } = req.body;
 
   const newItems = [
-    ...(question
-      ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }]
-      : []),
+    ...(question ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }] : []),
     { role: "model", parts: [{ text: answer }] },
   ];
 
@@ -166,21 +159,16 @@ app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
   }
 });
 
-// NEW DELETE ENDPOINT
+// DELETE ENDPOINT
 app.delete("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
   const userId = req.auth.userId;
 
   try {
-    // Remove chat from the Chat collection
     await Chat.deleteOne({ _id: req.params.id, userId });
-
-    // Remove chat from UserChats collection
     await UserChats.updateOne(
       { userId },
       { $pull: { chats: { _id: req.params.id } } }
     );
-
-    // Send JSON response
     res.status(200).json({ message: "Chat deleted successfully" });
   } catch (err) {
     console.log(err);
@@ -188,19 +176,18 @@ app.delete("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
   }
 });
 
-
-
+// General error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(401).send("Unauthenticated!");
+  res.status(err.status || 500).send({ error: err.message || 'Internal Server Error' });
 });
 
-// PRODUCTION
-app.use(express.static(path.join(__dirname, "../client/dist")));
+// Remove static file serving
+// app.use(express.static(path.join(__dirname, "../client/dist"))); // Removed
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "../client/dist", "index.html")); // Removed
+// });
 
 app.listen(port, () => {
   connect();
