@@ -35,10 +35,9 @@ app.options('*', cors());
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  console.log(`${req.method} request for '${req.url}' from origin '${req.headers.origin}'`);
   next();
 });
-
 app.use(express.json());
 
 const connect = async () => {
