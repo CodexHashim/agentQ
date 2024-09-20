@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Allowed origins for CORS
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5137'];
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5137', 'https://rh-agent-q.vercel.app'];
 
 app.use(
   cors({
