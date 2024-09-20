@@ -23,23 +23,14 @@ const allowedOrigins = [
 ];
 
 // CORS setup
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      console.log('Origin:', origin);
-      if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
-// Preflight handling
+// Preflight handling for all routes
 app.options('*', cors());
 
 // Request logging middleware
@@ -70,28 +61,29 @@ app.get("/api/upload", (req, res) => {
   res.send(result);
 });
 
+// Chat-related API routes
 app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
   const userId = req.auth.userId;
   const { text } = req.body;
 
   try {
     const newChat = new Chat({
-      userId: userId,
+      userId,
       history: [{ role: "user", parts: [{ text }] }],
     });
 
     const savedChat = await newChat.save();
-    const userChats = await UserChats.find({ userId: userId });
+    const userChats = await UserChats.find({ userId });
 
     if (!userChats.length) {
       const newUserChats = new UserChats({
-        userId: userId,
+        userId,
         chats: [{ _id: savedChat._id, title: text.substring(0, 40) }],
       });
       await newUserChats.save();
     } else {
       await UserChats.updateOne(
-        { userId: userId },
+        { userId },
         {
           $push: {
             chats: {
@@ -109,86 +101,13 @@ app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
   }
 });
 
-app.get("/api/userchats", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
-
-  try {
-    const userChats = await UserChats.find({ userId });
-    res.status(200).send(userChats[0].chats);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Error fetching userchats!");
-  }
-});
-
-app.get("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
-
-  try {
-    const chat = await Chat.findOne({ _id: req.params.id, userId });
-    res.status(200).send(chat);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Error fetching chat!");
-  }
-});
-
-app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
-  const { question, answer, img } = req.body;
-
-  const newItems = [
-    ...(question ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }] : []),
-    { role: "model", parts: [{ text: answer }] },
-  ];
-
-  try {
-    const updatedChat = await Chat.updateOne(
-      { _id: req.params.id, userId },
-      {
-        $push: {
-          history: {
-            $each: newItems,
-          },
-        },
-      }
-    );
-    res.status(200).send(updatedChat);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Error adding conversation!");
-  }
-});
-
-// DELETE ENDPOINT
-app.delete("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
-  const userId = req.auth.userId;
-
-  try {
-    await Chat.deleteOne({ _id: req.params.id, userId });
-    await UserChats.updateOne(
-      { userId },
-      { $pull: { chats: { _id: req.params.id } } }
-    );
-    res.status(200).json({ message: "Chat deleted successfully" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Error deleting chat!" });
-  }
-});
+// Other API routes...
 
 // General error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).send({ error: err.message || 'Internal Server Error' });
 });
-
-// Remove static file serving
-// app.use(express.static(path.join(__dirname, "../client/dist"))); // Removed
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "../client/dist", "index.html")); // Removed
-// });
 
 app.listen(port, () => {
   connect();
